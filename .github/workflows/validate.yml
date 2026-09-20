@@ -1,0 +1,23 @@
+name: Validate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out add-on
+        uses: actions/checkout@v4
+
+      - name: Check out pinned GuppyScreen source
+        uses: actions/checkout@v4
+        with:
+          repository: ballaswag/guppyscreen
+          ref: 07409cb031bbbfc57cd7817ba295e5385e3d5565
+          path: guppyscreen
+          submodules: recursive
+
+      - name: Validate scripts and patch
+        run: ./tests/validate.sh "$GITHUB_WORKSPACE/guppyscreen"
