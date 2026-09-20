@@ -17,4 +17,10 @@ if [ -n "$UPSTREAM_DIR" ]; then
     git -C "$UPSTREAM_DIR" apply --check "$PATCH"
 fi
 
+CFG="$ROOT/klipper/filament-change.cfg"
+grep -q 'SAVE_GCODE_STATE NAME=filament_change' "$CFG"
+[ "$(grep -c 'RESTORE_GCODE_STATE NAME=filament_change' "$CFG")" -ge 2 ]
+grep -q 'TMP_TARGET="\$TARGET_CFG.\$\$"' "$ROOT/install.sh"
+grep -q 'mv "\$TMP_TARGET" "\$TARGET_CFG"' "$ROOT/install.sh"
+
 echo "Validation passed"

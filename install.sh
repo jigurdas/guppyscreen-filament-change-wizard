@@ -8,10 +8,12 @@ CONFIG_DIR="${CONFIG_DIR:-$DEFAULT_CONFIG_DIR}"
 SELF_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 TMP_CFG="/tmp/filament-change.cfg.$$"
 TMP_REPO="${CONFIG_DIR}/GuppyScreen/filament-change-wizard.tmp.$$"
+TMP_TARGET=""
 
 cleanup() {
     rm -f "$TMP_CFG"
     rm -rf "$TMP_REPO"
+    [ -z "$TMP_TARGET" ] || rm -f "$TMP_TARGET"
 }
 trap cleanup EXIT INT TERM
 fail() { echo "ERROR: $*" >&2; exit 1; }
@@ -79,7 +81,10 @@ cp -p "$PRINTER_CFG" "$BACKUP_DIR/printer.cfg"
 [ ! -f "$TARGET_CFG" ] || cp -p "$TARGET_CFG" "$BACKUP_DIR/filament-change.cfg"
 [ ! -f "$MOONRAKER_CFG" ] || cp -p "$MOONRAKER_CFG" "$BACKUP_DIR/moonraker.conf"
 
-cp "$TMP_CFG" "$TARGET_CFG"
+TMP_TARGET="$TARGET_CFG.$$"
+cp "$TMP_CFG" "$TMP_TARGET"
+mv "$TMP_TARGET" "$TARGET_CFG"
+TMP_TARGET=""
 
 if ! grep -Eq '^[[:space:]]*\[include[[:space:]]+GuppyScreen/\*\.cfg\][[:space:]]*$' "$PRINTER_CFG"; then
     printf '\n[include GuppyScreen/*.cfg]\n' >> "$PRINTER_CFG"
