@@ -34,6 +34,16 @@ The active spool is changed using Guppy Screen's existing Spoolman panel. Spoolm
 
 ## Printer configuration
 
+## One-command installation
+
+On the Ender-3 V3 KE, SSH into the printer and run:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/jigurdas/guppyscreen-filament-change-wizard/main/install.sh | sh
+```
+
+The installer detects the Moonraker config path, creates a timestamped backup, installs the Klipper module, adds the GuppyScreen include only when it is missing, checks Spoolman, and restarts Klipper. It does not overwrite the existing printer configuration apart from adding the missing include line.
+
 The supplied configuration already has:
 
 ```ini
