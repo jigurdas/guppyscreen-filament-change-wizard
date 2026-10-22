@@ -19,6 +19,17 @@ trap cleanup EXIT INT TERM
 fail() { echo "ERROR: $*" >&2; exit 1; }
 warn() { echo "WARNING: $*" >&2; }
 
+# Creality firmware keeps Klipper in /usr/share/klipper; KIAUH installs use ~/klipper
+find_klipper_extras() {
+    for dir in "${KLIPPER_EXTRAS:-}" /usr/share/klipper/klippy/extras "$HOME/klipper/klippy/extras"; do
+        if [ -n "$dir" ] && [ -f "$dir/gcode_macro.py" ]; then
+            echo "$dir"
+            return 0
+        fi
+    done
+    return 1
+}
+
 [ "$(id -u)" -eq 0 ] || fail "Run as root: sudo sh install.sh"
 
 if command -v curl >/dev/null 2>&1; then
@@ -74,12 +85,23 @@ else
     fail "curl or wget is required"
 fi
 
+LOCAL_MODULE="$SELF_DIR/klipper/fc_spoolman.py"
+[ -f "$LOCAL_MODULE" ] || fail "Cannot find $LOCAL_MODULE"
+EXTRAS_DIR="$(find_klipper_extras)" || fail "Cannot find klippy/extras; set KLIPPER_EXTRAS=/path/to/klippy/extras"
+TARGET_MODULE="$EXTRAS_DIR/fc_spoolman.py"
+
 STAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP_DIR="$CONFIG_DIR/filament-change-backup-$STAMP-$$"
 mkdir -p "$BACKUP_DIR"
 cp -p "$PRINTER_CFG" "$BACKUP_DIR/printer.cfg"
 [ ! -f "$TARGET_CFG" ] || cp -p "$TARGET_CFG" "$BACKUP_DIR/filament-change.cfg"
 [ ! -f "$MOONRAKER_CFG" ] || cp -p "$MOONRAKER_CFG" "$BACKUP_DIR/moonraker.conf"
+[ ! -f "$TARGET_MODULE" ] || cp -p "$TARGET_MODULE" "$BACKUP_DIR/fc_spoolman.py"
+
+# The module goes first: the config's [fc_spoolman] section needs it
+TMP_TARGET="$TARGET_MODULE.$$"
+cp "$LOCAL_MODULE" "$TMP_TARGET"
+mv "$TMP_TARGET" "$TARGET_MODULE"
 
 TMP_TARGET="$TARGET_CFG.$$"
 cp "$TMP_CFG" "$TMP_TARGET"
@@ -131,5 +153,6 @@ restart_service klipper || fail "Klipper restart failed; restore the backup in $
 echo "Filament Change Wizard installed"
 echo "Update path: $UPDATE_DIR"
 echo "Config: $TARGET_CFG"
+echo "Klipper module: $TARGET_MODULE"
 echo "Backup: $BACKUP_DIR"
 echo "$SPOOLMAN_STATUS"

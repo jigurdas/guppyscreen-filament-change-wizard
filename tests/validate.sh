@@ -18,6 +18,10 @@ if [ -n "$UPSTREAM_DIR" ]; then
 fi
 
 CFG="$ROOT/klipper/filament-change.cfg"
+MODULE="$ROOT/klipper/fc_spoolman.py"
+python3 -c 'import ast, sys; ast.parse(open(sys.argv[1]).read(), sys.argv[1])' "$MODULE"
+grep -q '^\[fc_spoolman\]' "$CFG"
+grep -q 'register_command("FC_SPOOL_PROMPT"' "$MODULE"
 grep -q 'SAVE_GCODE_STATE NAME=filament_change' "$CFG"
 [ "$(grep -c 'RESTORE_GCODE_STATE NAME=filament_change' "$CFG")" -ge 2 ]
 grep -q 'TMP_TARGET="\$TARGET_CFG.\$\$"' "$ROOT/install.sh"

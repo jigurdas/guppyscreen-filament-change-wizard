@@ -26,6 +26,14 @@ else
     echo "Klipper macro file was already absent"
 fi
 
+for dir in "${KLIPPER_EXTRAS:-}" /usr/share/klipper/klippy/extras "$HOME/klipper/klippy/extras"; do
+    if [ -n "$dir" ] && [ -f "$dir/fc_spoolman.py" ]; then
+        cp -p "$dir/fc_spoolman.py" "$BACKUP_DIR/fc_spoolman.py"
+        rm -f "$dir/fc_spoolman.py"
+        echo "Removed $dir/fc_spoolman.py"
+    fi
+done
+
 if [ -f "$MOONRAKER_CFG" ] && grep -q '^\[update_manager filament-change-wizard\]' "$MOONRAKER_CFG"; then
     TMP_MOONRAKER="$MOONRAKER_CFG.$$"
     awk '
