@@ -4,6 +4,10 @@
 # them as an "action:prompt" dialog. Each button runs the SELECT macro with
 # ID=<spool id> (ID=0 means "skip"). The HTTP request runs in a thread so
 # the Klipper reactor never blocks on the network.
+#
+# Copyright (C) 2026  jigurdas
+#
+# This file may be distributed under the terms of the GNU GPLv3 license.
 import json, logging, threading
 try:
     from urllib.request import Request, urlopen

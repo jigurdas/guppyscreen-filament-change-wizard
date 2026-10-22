@@ -87,3 +87,7 @@ Test first with a cold, unloaded printer and then with a short print. Confirm th
 ```sh
 ./tests/validate.sh
 ```
+
+## License
+
+GPL-3.0, the same license as Klipper and Guppy Screen. See [LICENSE](LICENSE).
