@@ -19,7 +19,8 @@ cp -p "$CONFIG_DIR/printer.cfg" "$BACKUP_DIR/printer.cfg"
 [ ! -f "$TARGET" ] || cp -p "$TARGET" "$BACKUP_DIR/filament-change.cfg"
 [ ! -f "$MOONRAKER_CFG" ] || cp -p "$MOONRAKER_CFG" "$BACKUP_DIR/moonraker.conf"
 
-if [ -f "$TARGET" ]; then
+# -L as well: the installer symlinks into the checkout, which may be gone
+if [ -f "$TARGET" ] || [ -L "$TARGET" ]; then
     rm -f "$TARGET"
     echo "Removed $TARGET"
 else
@@ -27,8 +28,8 @@ else
 fi
 
 for dir in "${KLIPPER_EXTRAS:-}" /usr/share/klipper/klippy/extras "$HOME/klipper/klippy/extras"; do
-    if [ -n "$dir" ] && [ -f "$dir/fc_spoolman.py" ]; then
-        cp -p "$dir/fc_spoolman.py" "$BACKUP_DIR/fc_spoolman.py"
+    if [ -n "$dir" ] && { [ -f "$dir/fc_spoolman.py" ] || [ -L "$dir/fc_spoolman.py" ]; }; then
+        [ ! -f "$dir/fc_spoolman.py" ] || cp -p "$dir/fc_spoolman.py" "$BACKUP_DIR/fc_spoolman.py"
         rm -f "$dir/fc_spoolman.py"
         echo "Removed $dir/fc_spoolman.py"
     fi

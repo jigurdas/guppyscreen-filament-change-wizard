@@ -40,7 +40,13 @@ git clone --depth=1 https://github.com/jigurdas/guppyscreen-filament-change-wiza
 
 (The busybox `curl` on Creality firmware has no TLS support, so `curl ... | sh` does not work there; `git` does.)
 
-The installer creates a timestamped backup, installs `fc_spoolman.py` into `klippy/extras` and the macros into `GuppyScreen/filament-change.cfg`, adds the GuppyScreen include only when it is missing, registers the repository with Moonraker Update Manager, and restarts the Klipper and Moonraker services. Klipper's extras folder is found automatically (`/usr/share/klipper/klippy/extras` on Creality firmware, `~/klipper/klippy/extras` on KIAUH installs); set `KLIPPER_EXTRAS=/path/to/klippy/extras` to override.
+The installer creates a timestamped backup, keeps a git checkout in `GuppyScreen/filament-change-wizard`, symlinks `klippy/extras/fc_spoolman.py` and `GuppyScreen/filament-change.cfg` to the files in that checkout, adds the GuppyScreen include only when it is missing, registers the repository with Moonraker Update Manager, and restarts the Klipper and Moonraker services.
+
+## Updates
+
+The wizard shows up in the Fluidd/Mainsail update list as **filament-change-wizard**. Press **Update** there: Moonraker pulls the new version and restarts Klipper, and because the macros and the module are symlinks into the checkout, the new version is live after that restart. Moonraker does not run `install.sh` on updates; run it again only after a Creality firmware update (see below).
+
+Installs from before v0.2.3 copied the files instead of linking them. Run the installer once more to switch to links; until then, updates from Fluidd do not reach Klipper. Klipper's extras folder is found automatically (`/usr/share/klipper/klippy/extras` on Creality firmware, `~/klipper/klippy/extras` on KIAUH installs); set `KLIPPER_EXTRAS=/path/to/klippy/extras` to override.
 
 Backups are written under:
 

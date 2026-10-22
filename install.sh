@@ -2,16 +2,13 @@
 set -eu
 
 REPO_URL="https://github.com/jigurdas/guppyscreen-filament-change-wizard.git"
-RAW_URL="https://raw.githubusercontent.com/jigurdas/guppyscreen-filament-change-wizard/main"
 DEFAULT_CONFIG_DIR="/usr/data/printer_data/config"
 CONFIG_DIR="${CONFIG_DIR:-$DEFAULT_CONFIG_DIR}"
 SELF_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
-TMP_CFG="/tmp/filament-change.cfg.$$"
 TMP_REPO="${CONFIG_DIR}/GuppyScreen/filament-change-wizard.tmp.$$"
 TMP_TARGET=""
 
 cleanup() {
-    rm -f "$TMP_CFG"
     rm -rf "$TMP_REPO"
     [ -z "$TMP_TARGET" ] || rm -f "$TMP_TARGET"
 }
@@ -74,18 +71,13 @@ case "$SELF_DIR" in
         ;;
 esac
 
-LOCAL_CFG="$SELF_DIR/klipper/filament-change.cfg"
-if [ -f "$LOCAL_CFG" ]; then
-    cp "$LOCAL_CFG" "$TMP_CFG"
-elif command -v curl >/dev/null 2>&1; then
-    curl -fsSL "$RAW_URL/klipper/filament-change.cfg" -o "$TMP_CFG" || fail "Cannot download filament-change.cfg"
-elif command -v wget >/dev/null 2>&1; then
-    wget -qO "$TMP_CFG" "$RAW_URL/klipper/filament-change.cfg" || fail "Cannot download filament-change.cfg"
-else
-    fail "curl or wget is required"
-fi
-
-LOCAL_MODULE="$SELF_DIR/klipper/fc_spoolman.py"
+# From here on the script runs from the Update Manager checkout. The config
+# and the module are symlinked into it, so an update from Fluidd/Mainsail
+# (git pull, then a Klipper service restart by Moonraker) applies them;
+# Moonraker does not run this script on updates.
+LOCAL_CFG="$UPDATE_DIR/klipper/filament-change.cfg"
+LOCAL_MODULE="$UPDATE_DIR/klipper/fc_spoolman.py"
+[ -f "$LOCAL_CFG" ] || fail "Cannot find $LOCAL_CFG"
 [ -f "$LOCAL_MODULE" ] || fail "Cannot find $LOCAL_MODULE"
 EXTRAS_DIR="$(find_klipper_extras)" || fail "Cannot find klippy/extras; set KLIPPER_EXTRAS=/path/to/klippy/extras"
 TARGET_MODULE="$EXTRAS_DIR/fc_spoolman.py"
@@ -98,14 +90,16 @@ cp -p "$PRINTER_CFG" "$BACKUP_DIR/printer.cfg"
 [ ! -f "$MOONRAKER_CFG" ] || cp -p "$MOONRAKER_CFG" "$BACKUP_DIR/moonraker.conf"
 [ ! -f "$TARGET_MODULE" ] || cp -p "$TARGET_MODULE" "$BACKUP_DIR/fc_spoolman.py"
 
-# The module goes first: the config's [fc_spoolman] section needs it
+# The module goes first: the config's [fc_spoolman] section needs it.
+# Links are created next to the target and renamed over it, so the target
+# is never missing.
 TMP_TARGET="$TARGET_MODULE.$$"
-cp "$LOCAL_MODULE" "$TMP_TARGET"
-mv "$TMP_TARGET" "$TARGET_MODULE"
+ln -s "$LOCAL_MODULE" "$TMP_TARGET"
+mv -f "$TMP_TARGET" "$TARGET_MODULE"
 
 TMP_TARGET="$TARGET_CFG.$$"
-cp "$TMP_CFG" "$TMP_TARGET"
-mv "$TMP_TARGET" "$TARGET_CFG"
+ln -s "$LOCAL_CFG" "$TMP_TARGET"
+mv -f "$TMP_TARGET" "$TARGET_CFG"
 TMP_TARGET=""
 
 if ! grep -Eq '^[[:space:]]*\[include[[:space:]]+GuppyScreen/\*\.cfg\][[:space:]]*$' "$PRINTER_CFG"; then
