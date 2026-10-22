@@ -35,8 +35,10 @@ The unload/load distances are conservative defaults for the KE extruder. Test wi
 SSH into the printer and run:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/jigurdas/guppyscreen-filament-change-wizard/main/install.sh | sh
+git clone --depth=1 https://github.com/jigurdas/guppyscreen-filament-change-wizard.git /tmp/fcw && sh /tmp/fcw/install.sh
 ```
+
+(The busybox `curl` on Creality firmware has no TLS support, so `curl ... | sh` does not work there; `git` does.)
 
 The installer creates a timestamped backup, installs `fc_spoolman.py` into `klippy/extras` and the macros into `GuppyScreen/filament-change.cfg`, adds the GuppyScreen include only when it is missing, registers the repository with Moonraker Update Manager, and restarts the Klipper and Moonraker services. Klipper's extras folder is found automatically (`/usr/share/klipper/klippy/extras` on Creality firmware, `~/klipper/klippy/extras` on KIAUH installs); set `KLIPPER_EXTRAS=/path/to/klippy/extras` to override.
 
@@ -52,7 +54,7 @@ For a local checkout, use:
 sudo sh install-klipper.sh /usr/data/printer_data/config
 ```
 
-Then restart the **Klipper service** (`/etc/init.d/S55klipper_service restart` on Creality firmware). A `RESTART` or `FIRMWARE_RESTART` command reloads the configuration but not new Python modules.
+Then restart the **Klipper service** (`/etc/init.d/S55klipper_service restart` on Creality firmware). A `RESTART` or `FIRMWARE_RESTART` command reloads the configuration but not new Python modules. If Klipper then reports that the MCU is shut down, run `FIRMWARE_RESTART` once.
 
 A Creality firmware update replaces `klippy/extras` and removes `fc_spoolman.py`. Run the installer again afterwards, or Klipper stops with an unknown `[fc_spoolman]` section.
 

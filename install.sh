@@ -134,12 +134,28 @@ else
     SPOOLMAN_STATUS="WARNING: $MOONRAKER_CFG was not found; Update Manager and Spoolman checks were skipped"
 fi
 
+# Creality's init scripts restart with "stop; sleep 1; start", and start
+# refuses to run while the old process is still exiting, which leaves the
+# service down. Stop, wait for the pid to go away, then start.
+restart_initd() {
+    script="$1"
+    pidfile="$2"
+    "$script" stop || true
+    tries=0
+    while [ -f "$pidfile" ] && kill -0 "$(cat "$pidfile")" 2>/dev/null; do
+        tries=$((tries + 1))
+        [ "$tries" -le 30 ] || return 1
+        sleep 1
+    done
+    "$script" start
+}
+
 restart_service() {
     service_name="$1"
     if [ "$service_name" = klipper ] && [ -x /etc/init.d/S55klipper_service ]; then
         /etc/init.d/S55klipper_service restart
     elif [ "$service_name" = moonraker ] && [ -x /etc/init.d/S56moonraker_service ]; then
-        /etc/init.d/S56moonraker_service restart
+        restart_initd /etc/init.d/S56moonraker_service /var/run/moonraker.pid
     elif command -v systemctl >/dev/null 2>&1; then
         systemctl restart "$service_name"
     else
